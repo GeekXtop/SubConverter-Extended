@@ -123,23 +123,34 @@ class DefaultRemotePolicyTests(unittest.TestCase):
         self.assertRegex(toml, r'(?m)^default_external_config\s*=\s*""\s*$')
         self.assertRegex(yaml, r'(?m)^\s*default_external_config:\s*""\s*$')
 
-    def test_settings_loader_has_no_implicit_cocr_url(self):
+    def test_runtime_loaders_have_no_implicit_cocr_url(self):
         settings = (ROOT / "src/handler/settings.cpp").read_text()
+        interfaces = (ROOT / "src/handler/interfaces.cpp").read_text()
 
-        self.assertNotIn(
-            "Custom_OpenClash_Rules@refs/heads/main/cfg/Custom_Clash.ini",
-            settings,
-        )
+        for source in (settings, interfaces):
+            self.assertNotIn(
+                "Custom_OpenClash_Rules@refs/heads/main/cfg/Custom_Clash.ini",
+                source,
+            )
         self.assertNotIn("if (global.defaultExtConfig.empty())", settings)
+        self.assertIn(
+            "if (global.fallbackToDefaultExternalConfig &&",
+            interfaces,
+        )
 
-    def test_active_toml_rulesets_have_no_cocr_remote_entries(self):
-        rulesets = (ROOT / "base/snippets/rulesets.toml").read_text().splitlines()
-
-        active_lines = [
-            line
-            for line in rulesets
-            if line.strip() and not line.lstrip().startswith("#")
+    def test_imported_default_rulesets_have_no_cocr_remote_entries(self):
+        imported_rulesets = [
+            ROOT / "base/snippets/rulesets.toml",
+            ROOT / "base/snippets/rulesets.txt",
         ]
+
+        active_lines = []
+        for path in imported_rulesets:
+            active_lines.extend(
+                line
+                for line in path.read_text().splitlines()
+                if line.strip() and not line.lstrip().startswith("#")
+            )
         self.assertFalse(any("Custom_OpenClash_Rules" in line for line in active_lines))
         self.assertFalse(
             any(
@@ -157,7 +168,7 @@ Run:
 python3 -m unittest -v tests/test_default_remote_policy.py
 ~~~
 
-Expected: at least test_active_toml_rulesets_have_no_cocr_remote_entries fails against the rebased upstream code because base/snippets/rulesets.toml contains active testingcf.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules entries.
+Expected: at least test_imported_default_rulesets_have_no_cocr_remote_entries fails against the rebased upstream code because base/snippets/rulesets.toml contains active testingcf.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules entries.
 
 ### Task 3: Apply the no-default-remote policy (GREEN)
 

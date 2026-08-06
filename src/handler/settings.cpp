@@ -31,10 +31,6 @@ extern WebServer webServer;
 
 namespace {
 
-constexpr const char *kDefaultExternalConfig =
-    "https://gcore.jsdelivr.net/gh/Aethersailor/"
-    "Custom_OpenClash_Rules@refs/heads/main/cfg/Custom_Clash.ini";
-
 struct CommonScalarSettings {
   bool prependInsert;
   std::string basePath;
@@ -86,8 +82,7 @@ void applyCommonScalarSettings(CommonScalarSettings settings) {
       ProxyBypassPolicy::parse(settings.proxyBypass);
   if (!bypass.valid)
     throw std::invalid_argument("proxy_bypass 配置无效：" + bypass.error + "。");
-  if (settings.defaultExtConfig.empty())
-    settings.defaultExtConfig = kDefaultExternalConfig;
+  // Empty default_external_config is valid and means no fallback template.
 
   global.prependInsert = settings.prependInsert;
   global.basePath = std::move(settings.basePath);

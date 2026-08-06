@@ -2,8 +2,8 @@
 
 services:
   subconverter-extended:
-    container_name: SubConverter-Extended
-    image: aethersailor/subconverter-extended:latest
+    container_name: "SubConverter-Extended"
+    image: "subconverter-extended:latest"
     ports:
       # 保留既有的全接口端口发布，方便局域网设备直接访问；这表示“可能被外部访问”，
       # 但不能单凭该行判断服务已暴露公网，还需结合宿主防火墙、云安全组、NAT 和反代判断。
@@ -14,10 +14,10 @@ services:
       - "25500:25500/tcp"
     restart: unless-stopped
     environment:
-      TZ: Asia/Shanghai
+      TZ: "Asia/Shanghai"
       # 按需取消注释并修改；环境变量会覆盖 pref.toml 中的对应配置。
       # Uncomment and edit as needed; environment variables override pref.toml.
-      # MANAGED_CONFIG_PREFIX: "http://your-domain-or-ip:25500"
+      MANAGED_CONFIG_PREFIX: "http://localhost:25500"
       # 默认 lan 保持既有内网行为；确认公网可达的部署请显式选择 public 或 strict。
       # Default lan preserves existing LAN behavior. If Internet reachability is
       # confirmed, explicitly select public or strict.

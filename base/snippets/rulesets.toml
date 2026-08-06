@@ -1,4 +1,3 @@
-# 与 Custom_OpenClash_Rules/cfg/Custom_Clash.ini 的 ruleset 顺序和行为保持一致。
 # 内置 GEOSITE/GEOIP/FINAL 规则显式使用 interval = 0，以匹配 INI 解析结果。
 
 [[rulesets]]
@@ -13,30 +12,6 @@ interval = 0
 
 [[rulesets]]
 group = "🎯 全球直连"
-ruleset = "https://testingcf.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules@main/rule/Custom_Direct_Domain.mrs"
-type = "clash-domain"
-interval = 28800
-
-[[rulesets]]
-group = "🎯 全球直连"
-ruleset = "https://testingcf.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules@main/rule/Custom_Direct_Classical_IP.yaml"
-type = "clash-classic"
-interval = 28800
-
-[[rulesets]]
-group = "🚀 手动选择"
-ruleset = "https://testingcf.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules@main/rule/Custom_Proxy_Domain.mrs"
-type = "clash-domain"
-interval = 28800
-
-[[rulesets]]
-group = "🚀 手动选择"
-ruleset = "https://testingcf.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules@main/rule/Custom_Proxy_Classical_IP.yaml"
-type = "clash-classic"
-interval = 28800
-
-[[rulesets]]
-group = "🎯 全球直连"
 ruleset = "[]GEOSITE,google-cn"
 interval = 0
 
@@ -44,18 +19,6 @@ interval = 0
 group = "🎯 全球直连"
 ruleset = "[]GEOSITE,category-games@cn"
 interval = 0
-
-[[rulesets]]
-group = "🎯 全球直连"
-ruleset = "https://testingcf.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules@main/rule/Steam_CDN_Domain.mrs"
-type = "clash-domain"
-interval = 28800
-
-[[rulesets]]
-group = "🎯 全球直连"
-ruleset = "https://testingcf.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules@main/rule/Steam_CDN_Classical_IP.yaml"
-type = "clash-classic"
-interval = 28800
 
 [[rulesets]]
 group = "🎯 全球直连"
@@ -226,12 +189,6 @@ interval = 0
 group = "🎯 全球直连"
 ruleset = "[]GEOIP,cn,no-resolve"
 interval = 0
-
-[[rulesets]]
-group = "🔀 非标端口"
-ruleset = "https://testingcf.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules@main/rule/Custom_Port_Direct.yaml"
-type = "clash-classic"
-interval = 28800
 
 [[rulesets]]
 group = "🐟 漏网之鱼"

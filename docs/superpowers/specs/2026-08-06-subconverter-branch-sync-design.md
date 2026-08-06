@@ -9,6 +9,7 @@
 - 当前 `master` 指向 `origin/master` 的 `a178233`，且是 `upstream/master` 的祖先。
 - 上游已推进到 `88e41ea`（`v1.3.0` 之后的修订）。
 - 当前工作区有六个未提交的本地定制文件：三个偏好示例、`docker-compose.yml`、`src/handler/interfaces.cpp`、`src/handler/settings.cpp`。
+- 变基后 `src/handler/interfaces.cpp` 不再产生本地差异，因为上游已经移除了其中原有的回退列表；这表示该项定制已被上游等价吸收，而不是丢失。
 - 同目录项目采用“干净同步分支 + 本地定制分支”的模式；本项目采用 `master` 与 `local-customizations` 两个分支名。
 
 ## 分支模型

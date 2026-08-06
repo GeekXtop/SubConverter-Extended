@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - master must contain only upstream history and track upstream/master.
-- local-customizations must retain the six pre-existing local file changes and track the fork remote as origin/local-customizations.
+- local-customizations must retain the six pre-existing local behaviors and track the fork remote as origin/local-customizations; if upstream already absorbed one behavior, do not add a redundant diff.
 - Never push to upstream; all pushes use an explicit origin refspec.
 - An empty default_external_config means no implicit external template.
 - Only active default configuration is changed; explicit user-supplied URLs and compatibility URL parsing remain available.
@@ -79,7 +79,7 @@ git add base/pref.example.ini base/pref.example.toml base/pref.example.yml docke
 git rebase --continue
 ~~~
 
-Expected: local-customizations is a descendant of master with one local customization commit and no unresolved index.
+Expected: local-customizations is a descendant of master with the local customization commit (five files may remain changed when upstream has already absorbed the interfaces.cpp behavior) and no unresolved index.
 
 - [ ] **Step 5: Publish both branch roles to the fork remote**
 
@@ -98,7 +98,7 @@ Expected: origin/master equals upstream/master; origin/local-customizations poin
 - Create: tests/test_default_remote_policy.py
 
 **Interfaces:**
-- Produces: a Python test executable with pytest that enforces the no-implicit-COCR policy.
+- Produces: a Python test executable collected by the repository's unittest discovery (and compatible with pytest) that enforces the no-implicit-COCR policy.
 
 - [ ] **Step 1: Write the failing policy test on the rebased branch**
 
@@ -107,40 +107,46 @@ Create tests/test_default_remote_policy.py with:
 ~~~python
 from pathlib import Path
 import re
+import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_example_configs_disable_implicit_external_config():
-    ini = (ROOT / "base/pref.example.ini").read_text()
-    toml = (ROOT / "base/pref.example.toml").read_text()
-    yaml = (ROOT / "base/pref.example.yml").read_text()
+class DefaultRemotePolicyTests(unittest.TestCase):
+    def test_example_configs_disable_implicit_external_config(self):
+        ini = (ROOT / "base/pref.example.ini").read_text()
+        toml = (ROOT / "base/pref.example.toml").read_text()
+        yaml = (ROOT / "base/pref.example.yml").read_text()
 
-    assert re.search(r"(?m)^default_external_config\s*=\s*$", ini)
-    assert re.search(r'(?m)^default_external_config\s*=\s*""\s*$', toml)
-    assert re.search(r'(?m)^\s*default_external_config:\s*""\s*$', yaml)
+        self.assertRegex(ini, r"(?m)^default_external_config\s*=\s*$")
+        self.assertRegex(toml, r'(?m)^default_external_config\s*=\s*""\s*$')
+        self.assertRegex(yaml, r'(?m)^\s*default_external_config:\s*""\s*$')
 
+    def test_settings_loader_has_no_implicit_cocr_url(self):
+        settings = (ROOT / "src/handler/settings.cpp").read_text()
 
-def test_settings_loader_has_no_implicit_cocr_url():
-    settings = (ROOT / "src/handler/settings.cpp").read_text()
+        self.assertNotIn(
+            "Custom_OpenClash_Rules@refs/heads/main/cfg/Custom_Clash.ini",
+            settings,
+        )
+        self.assertNotIn("if (global.defaultExtConfig.empty())", settings)
 
-    assert "Custom_OpenClash_Rules@refs/heads/main/cfg/Custom_Clash.ini" not in settings
-    assert "if (global.defaultExtConfig.empty())" not in settings
+    def test_active_toml_rulesets_have_no_cocr_remote_entries(self):
+        rulesets = (ROOT / "base/snippets/rulesets.toml").read_text().splitlines()
 
-
-def test_active_toml_rulesets_have_no_cocr_remote_entries():
-    rulesets = (ROOT / "base/snippets/rulesets.toml").read_text().splitlines()
-
-    active_lines = [
-        line for line in rulesets
-        if line.strip() and not line.lstrip().startswith("#")
-    ]
-    assert not any("Custom_OpenClash_Rules" in line for line in active_lines)
-    assert not any(
-        "testingcf.jsdelivr.net/gh/Aethersailor" in line
-        for line in active_lines
-    )
+        active_lines = [
+            line
+            for line in rulesets
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+        self.assertFalse(any("Custom_OpenClash_Rules" in line for line in active_lines))
+        self.assertFalse(
+            any(
+                "testingcf.jsdelivr.net/gh/Aethersailor" in line
+                for line in active_lines
+            )
+        )
 ~~~
 
 - [ ] **Step 2: Run the new test and confirm it catches the incoming defaults**
@@ -148,7 +154,7 @@ def test_active_toml_rulesets_have_no_cocr_remote_entries():
 Run:
 
 ~~~bash
-python3 -m pytest -q tests/test_default_remote_policy.py
+python3 -m unittest -v tests/test_default_remote_policy.py
 ~~~
 
 Expected: at least test_active_toml_rulesets_have_no_cocr_remote_entries fails against the rebased upstream code because base/snippets/rulesets.toml contains active testingcf.jsdelivr.net/gh/Aethersailor/Custom_OpenClash_Rules entries.
@@ -183,7 +189,7 @@ Delete the active ruleset entries whose URL contains Custom_OpenClash_Rules or t
 Run:
 
 ~~~bash
-python3 -m pytest -q tests/test_default_remote_policy.py
+python3 -m unittest -v tests/test_default_remote_policy.py
 ~~~
 
 Expected: all tests pass.
@@ -218,8 +224,7 @@ Expected: CMake configuration and the subconverter target complete successfully.
 Run:
 
 ~~~bash
-python3 -m pytest -q tests/test_default_remote_policy.py
-python3 -m pytest -q tests/test_sync_upstream_parser.py 2>/dev/null || true
+python3 -m unittest discover -s tests -p 'test_*.py' -v
 ~~~
 
 Expected: the policy test passes; if the optional upstream-sync parser test is absent, record that it was not available rather than treating the absence as a product failure.

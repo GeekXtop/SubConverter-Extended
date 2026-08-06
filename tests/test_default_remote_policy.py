@@ -26,6 +26,7 @@ class DefaultRemotePolicyTests(unittest.TestCase):
                 source,
             )
         self.assertNotIn("if (global.defaultExtConfig.empty())", settings)
+        self.assertIn("global.defaultExtConfig.clear();", settings)
         self.assertIn(
             "if (global.fallbackToDefaultExternalConfig &&",
             interfaces,

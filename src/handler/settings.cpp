@@ -1110,6 +1110,7 @@ bool readConf() {
   };
 
   auto resetReloadableSettings = []() {
+    global.defaultExtConfig.clear();
     eraseElements(global.excludeRemarks);
     eraseElements(global.includeRemarks);
     eraseElements(global.customProxyGroups);

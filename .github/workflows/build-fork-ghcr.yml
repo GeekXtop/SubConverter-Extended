@@ -1,0 +1,148 @@
+name: Build Fork GHCR AMD64
+
+on:
+  push:
+    branches:
+      - local-customizations
+    paths-ignore:
+      - README.md
+      - README-*.md
+      - docker-compose.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: fork-ghcr-amd64-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and publish fork image
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Python regression baselines
+        shell: bash
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Validate and export dependency snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/ci/dependency_snapshot.py check
+          python3 scripts/ci/dependency_snapshot.py emit --github-env "$GITHUB_ENV"
+
+      - name: Prepare build metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          sha_short="${GITHUB_SHA::12}"
+          build_date="$(git show -s --format=%cI "$GITHUB_SHA")"
+          {
+            echo "image=$image"
+            echo "sha_short=$sha_short"
+            echo "version=local-$sha_short"
+            echo "build_date=$build_date"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Prepare Docker build args
+        id: docker_args
+        shell: bash
+        env:
+          THREADS: "4"
+          SHA: ${{ steps.meta.outputs.sha_short }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          BUILD_DATE: ${{ steps.meta.outputs.build_date }}
+          REFRESH_GO_DEPS: "false"
+          REFRESH_HEADERS: "false"
+          BUILD_TESTS: "true"
+        run: |
+          set -euo pipefail
+          {
+            echo 'args<<EOF'
+            bash scripts/ci/docker-build-args.sh
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build candidate image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.image }}:ci-${{ steps.meta.outputs.sha_short }}
+          cache-from: type=registry,ref=${{ steps.meta.outputs.image }}:buildcache-amd64
+          cache-to: type=registry,ref=${{ steps.meta.outputs.image }}:buildcache-amd64,mode=max,ignore-error=true
+          build-args: ${{ steps.docker_args.outputs.args }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Smoke test candidate image
+        uses: ./.github/actions/smoke-docker-image
+        with:
+          image: ${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}
+          platform: linux/amd64
+
+      - name: Verify current branch head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "local-customizations"
+          current_sha="$(gh api "repos/${GITHUB_REPOSITORY}/branches/${GITHUB_REF_NAME}" --jq '.commit.sha')"
+          if [ "$current_sha" != "$GITHUB_SHA" ]; then
+            echo "::error::Branch advanced from $GITHUB_SHA to $current_sha; refusing promotion."
+            exit 1
+          fi
+
+      - name: Promote tested image
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+          SHA_SHORT: ${{ steps.meta.outputs.sha_short }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create \
+            --tag "$IMAGE:latest" \
+            --tag "$IMAGE:local-customizations" \
+            --tag "$IMAGE:sha-$SHA_SHORT" \
+            "$IMAGE@$DIGEST"
+
+      - name: Verify published amd64 manifest
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect "$IMAGE:latest" | tee /tmp/fork-image-manifest.txt
+          mapfile -t platforms < <(
+            awk '$1 == "Platform:" { print $2 }' /tmp/fork-image-manifest.txt
+          )
+          test "${#platforms[@]}" -eq 1
+          test "${platforms[0]}" = "linux/amd64"

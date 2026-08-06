@@ -1652,6 +1652,7 @@ bool readConf() {
     beginSecuritySettingsLoad();
     global.printDbgInfo = false;
     global.logLevel = LOG_LEVEL_INFO;
+    global.defaultExtConfig.clear();
     eraseElements(global.excludeRemarks);
     eraseElements(global.includeRemarks);
     eraseElements(global.customProxyGroups);

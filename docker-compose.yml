@@ -2,17 +2,17 @@
 
 services:
   subconverter-extended:
-    container_name: SubConverter-Extended
-    image: aethersailor/subconverter-extended:latest
+    container_name: "SubConverter-Extended"
+    image: "subconverter-extended:latest"
     ports:
       # 自定义映射端口号 / Customize the published port.
       - "25500:25500/tcp"
     restart: unless-stopped
     environment:
-      TZ: Asia/Shanghai
+      TZ: "Asia/Shanghai"
       # 按需取消注释并修改；环境变量会覆盖 pref.toml 中的对应配置。
       # Uncomment and edit as needed; environment variables override pref.toml.
-      # MANAGED_CONFIG_PREFIX: "http://your-domain-or-ip:25500"
+      MANAGED_CONFIG_PREFIX: "http://localhost:25500"
       # SUBCONVERTER_SECURITY_PROFILE: public
       # SUBCONVERTER_ALLOW_PUBLIC_UPLOAD: "false"
     volumes:

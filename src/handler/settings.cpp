@@ -531,12 +531,7 @@ void readYAMLConf(YAML::Node &node) {
   section["default_external_config"] >> global.defaultExtConfig;
   section["fallback_to_default_external_config"] >>
       global.fallbackToDefaultExternalConfig;
-  // Set hardcoded default if not configured or empty
-  if (global.defaultExtConfig.empty()) {
-    global.defaultExtConfig =
-        "https://gcore.jsdelivr.net/gh/Aethersailor/"
-        "Custom_OpenClash_Rules@refs/heads/main/cfg/Custom_Clash.ini";
-  }
+  // Empty default_external_config is valid and means no fallback template.
   section["append_proxy_type"] >> global.appendType;
   section["proxy_config"] >> global.proxyConfig;
   section["proxy_ruleset"] >> global.proxyRuleset;
@@ -869,12 +864,7 @@ void readTOMLConf(toml::value &root) {
       "proxy_subscription", global.proxySubscription, "append_proxy_type",
       global.appendType, "reload_conf_on_request", global.reloadConfOnRequest);
 
-  // Set hardcoded default if not configured or empty (TOML)
-  if (global.defaultExtConfig.empty()) {
-    global.defaultExtConfig =
-        "https://gcore.jsdelivr.net/gh/Aethersailor/"
-        "Custom_OpenClash_Rules@refs/heads/main/cfg/Custom_Clash.ini";
-  }
+  // Empty default_external_config is valid and means no fallback template.
 
   if (root.contains("proxy_provider")) {
     const auto &section_proxy_provider =
@@ -1264,12 +1254,7 @@ bool readConf() {
   ini.get_if_exist("default_external_config", global.defaultExtConfig);
   ini.get_bool_if_exist("fallback_to_default_external_config",
                         global.fallbackToDefaultExternalConfig);
-  // Set hardcoded default if not configured or empty
-  if (global.defaultExtConfig.empty()) {
-    global.defaultExtConfig =
-        "https://gcore.jsdelivr.net/gh/Aethersailor/"
-        "Custom_OpenClash_Rules@refs/heads/main/cfg/Custom_Clash.ini";
-  }
+  // Empty default_external_config is valid and means no fallback template.
   ini.get_bool_if_exist("append_proxy_type", global.appendType);
   ini.get_if_exist("proxy_config", global.proxyConfig);
   ini.get_if_exist("proxy_ruleset", global.proxyRuleset);

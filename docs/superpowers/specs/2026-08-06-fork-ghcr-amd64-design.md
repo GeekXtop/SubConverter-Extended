@@ -41,4 +41,4 @@
 - 静态策略测试确认触发分支、唯一平台、GHCR 命名、权限、候选测试后提升顺序和 Compose 镜像。
 - 本地全部 Python unittest、同步守卫和 `git diff --check` 通过。
 - GitHub Actions 首轮运行成功，包含 Docker 内部 C++ 测试与现有 smoke test。
-- GHCR 的 `latest` manifest 仅包含 `linux/amd64`，并对应 `local-customizations` 最新提交。
+- GHCR 的 `latest` manifest 仅包含 `linux/amd64` 可运行镜像；允许 Buildx 为该镜像附带不可运行的 provenance attestation 描述符，并对应 `local-customizations` 最新提交。

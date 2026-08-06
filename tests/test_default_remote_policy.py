@@ -35,3 +35,13 @@ def test_active_toml_rulesets_have_no_cocr_remote_entries():
         "testingcf.jsdelivr.net/gh/Aethersailor" in line
         for line in active_lines
     )
+
+
+if __name__ == "__main__":
+    for test in (
+        test_example_configs_disable_implicit_external_config,
+        test_settings_loader_has_no_implicit_cocr_url,
+        test_active_toml_rulesets_have_no_cocr_remote_entries,
+    ):
+        test()
+    print("3 policy tests passed")

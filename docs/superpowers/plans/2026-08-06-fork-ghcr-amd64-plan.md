@@ -110,7 +110,7 @@ Create `.github/workflows/build-fork-ghcr.yml` with these stages in one `ubuntu-
 6. Run `.github/actions/smoke-docker-image` against the candidate digest.
 7. Query the GitHub API and fail if `local-customizations` no longer points at `${{ github.sha }}`.
 8. Promote the digest with `docker buildx imagetools create` to `latest`, `local-customizations`, and the SHA tag.
-9. Inspect `latest` and require exactly one `linux/amd64` platform.
+9. Inspect the raw OCI index and require exactly one runnable `linux/amd64` platform while allowing Buildx provenance attestation descriptors.
 
 - [ ] **Step 2: Point Compose at the published image**
 
@@ -211,4 +211,4 @@ git status --short --branch
 git ls-remote --heads origin master local-customizations
 ```
 
-Expected: `latest` reports only `linux/amd64`, the local branch matches `origin/local-customizations`, `master` remains the upstream-only commit, and the worktree is clean.
+Expected: `latest` reports one runnable `linux/amd64` image (plus optional Buildx attestation descriptors), the local branch matches `origin/local-customizations`, `master` remains the upstream-only commit, and the worktree is clean.

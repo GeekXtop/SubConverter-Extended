@@ -13,6 +13,8 @@ class ForkGhcrWorkflowTests(unittest.TestCase):
         self.assertIn("packages: write", workflow)
         self.assertIn("linux/amd64", workflow)
         self.assertIn('image="ghcr.io/${GITHUB_REPOSITORY,,}"', workflow)
+        self.assertIn("imagetools inspect --raw", workflow)
+        self.assertIn("verify_amd64_manifest.py", workflow)
         self.assertNotIn("linux/arm", workflow)
         self.assertNotIn("aethersailor/subconverter-extended", workflow.lower())
         self.assertNotIn("DOCKERHUB_", workflow)

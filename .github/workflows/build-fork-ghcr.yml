@@ -140,9 +140,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker buildx imagetools inspect "$IMAGE:latest" | tee /tmp/fork-image-manifest.txt
-          mapfile -t platforms < <(
-            awk '$1 == "Platform:" { print $2 }' /tmp/fork-image-manifest.txt
-          )
-          test "${#platforms[@]}" -eq 1
-          test "${platforms[0]}" = "linux/amd64"
+          docker buildx imagetools inspect --raw "$IMAGE:latest" \
+            > /tmp/fork-image-manifest.json
+          python3 scripts/ci/verify_amd64_manifest.py \
+            /tmp/fork-image-manifest.json

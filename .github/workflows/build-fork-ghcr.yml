@@ -102,10 +102,53 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Smoke test candidate image
-        uses: ./.github/actions/smoke-docker-image
-        with:
-          image: ${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}
-          platform: linux/amd64
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CID=""
+          cleanup() {
+            if [ -n "$CID" ]; then
+              docker rm -f "$CID" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup EXIT
+
+          CID="$(docker run -d --platform linux/amd64 -e PORT=25500 -p "127.0.0.1::25500" "$IMAGE")"
+          HOST_PORT="$(docker port "$CID" 25500/tcp | awk -F: 'END {print $NF}')"
+          URL="http://127.0.0.1:${HOST_PORT}/version"
+
+          docker exec "$CID" sh -c '
+            test "${TZ:-}" = "Asia/Shanghai"
+            test -e /usr/share/zoneinfo/Asia/Shanghai
+            test "$(date +%z)" = "+0800"
+            test ! -e /base/Custom_OpenClash_Rules
+          '
+          if [ "$(docker inspect --format '{{ if index .Config.Labels "com.aethersailor.custom-openclash-rules.revision" }}present{{ end }}' "$CID")" = "present" ]; then
+            echo "Image still contains the removed Custom_OpenClash_Rules revision label." >&2
+            exit 1
+          fi
+
+          for _ in $(seq 1 30); do
+            if curl -fsS "$URL" >/tmp/subconverter-smoke.out; then
+              head -c 200 /tmp/subconverter-smoke.out
+              route_status="$(curl -sS -o /dev/null -w '%{http_code}' \
+                "http://127.0.0.1:${HOST_PORT}/Custom_OpenClash_Rules/main/rule/example.yaml")"
+              test "$route_status" = "404"
+              exit 0
+            fi
+
+            if ! docker ps --filter "id=$CID" --format '{{.ID}}' | grep -q .; then
+              docker logs "$CID" || true
+              exit 1
+            fi
+
+            sleep 2
+          done
+
+          docker logs "$CID" || true
+          exit 1
 
       - name: Verify current branch head
         env:

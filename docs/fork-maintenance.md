@@ -37,6 +37,12 @@
 
 ## 维护台账
 
+### 2026-11-11 部署更新（192.168.100.105）
+
+- 镜像：`local-b8e6d0786f0a`（digest `sha256:dd7c78ed…`）→ `local-6d8644b54778`（digest `sha256:206f4c13…`）。
+- 方式：`docker compose pull && docker compose up -d`，容器重建。
+- 线上核验：容器 Up、revision 标签 = `6d8644b5477861dd9be36ae71907d58e0b6394f7`、`/version` HTTP 200、TZ 与策略检查通过、COCR 路由 404。
+
 ### 2026-11-11 例行上游同步（无历史重写）
 
 - 上游前进 31 个提交（`9c95d23` → `620bb2e`，未重写历史），master 重置同步并强推；新标签 v1.0.7–v1.0.9、v1.11.0–v1.11.4 共 8 个补齐并推送 origin。

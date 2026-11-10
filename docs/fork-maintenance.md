@@ -21,7 +21,7 @@
 
 ## GHCR 镜像构建
 
-- 触发：push 到 `local-customizations`（README 等路径豁免）或手动 `workflow_dispatch`。
+- 触发：push 到 `local-customizations`（README、docker-compose、`docs/**` 路径豁免，纯文档提交不触发构建）或手动 `workflow_dispatch`。
 - 流程：Python 回归基线（`unittest discover` 全目录，含上游测试）→ 依赖快照校验 → 构建 `ci-<sha>` 候选镜像（此步即编译门禁）→ 冒烟测试 → 校验分支头未前进 → 晋升 `latest` / `local-customizations` / `sha-<sha>` → 校验 amd64 manifest。
 - 冒烟测试为 fork 自有内联步骤（2026-10-27 起）：容器按 digest 启动、`/version` 响应、容器内 TZ=Asia/Shanghai、`/base/Custom_OpenClash_Rules` 不存在、已移除的 revision 标签不存在、COCR 路由返回 404。
 - 已知脆弱依赖：`scripts/ci/docker-build-args.sh` 仍为上游共有文件。上游若再删除（如本次删除 `.github/actions/`、冒烟脚本、`tests/fixtures/` 那样），构建会在对应步骤失败；届时应将其收编为 fork 自有文件。教训：**fork CI 只应依赖 fork 自有文件**。

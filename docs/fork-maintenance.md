@@ -37,6 +37,13 @@
 
 ## 维护台账
 
+### 2026-11-11 例行上游同步（无历史重写）
+
+- 上游前进 31 个提交（`9c95d23` → `620bb2e`，未重写历史），master 重置同步并强推；新标签 v1.0.7–v1.0.9、v1.11.0–v1.11.4 共 8 个补齐并推送 origin。
+- `local-customizations` 14 个提交 `--onto` 变基，**零冲突**：上游本轮改动（emoji 显式开关、proxy_direct 默认反转等）与 fork 修改点完全错开；`kDefaultExternalConfig` 硬编码默认、示例远程默认、默认 ruleset 远程条目均原样保留，fork 意图全部仍然必要。
+- 验证：fork 三测试全绿、工作流 YAML 12 步完整、策略关键点抽查通过、净差异不含任何 fork 专属文件且 settings.cpp 策略改动逐字节一致。
+- 变基前状态备份：本地分支 `backup/local-customizations-pre-sync-20261111`（`1fec0b2`）。
+
 ### 2026-10-27 上游历史重写全量同步 + 变基 + CI 修复
 
 - 上游（Aethersailor）强推重写 master。fork master 经核实为纯镜像（相对上游的全部「独有」提交均出自上游作者与 bot），重置到 `9c95d23` 并以 `--force-with-lease` 强推 origin。
